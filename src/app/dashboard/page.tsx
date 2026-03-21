@@ -29,12 +29,35 @@ export default function Dashboard() {
     type: "info"
   }]);
   const [stats, setStats] = useState({ videosLiked: 0, channelsSubbed: 0 });
+  const [nextRunTime, setNextRunTime] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState<string>("--:--");
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll logs
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
+
+  // Countdown Ticker
+  useEffect(() => {
+    if (!isActive || !nextRunTime) {
+      setTimeLeft("--:--");
+      return;
+    }
+
+    const tic = setInterval(() => {
+      const diff = nextRunTime - Date.now();
+      if (diff <= 0) {
+        setTimeLeft("00:00");
+      } else {
+        const m = Math.floor(diff / 60000).toString().padStart(2, '0');
+        const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+        setTimeLeft(`${m}:${s}`);
+      }
+    }, 1000);
+
+    return () => clearInterval(tic);
+  }, [isActive, nextRunTime]);
 
   // The Main Loop
   useEffect(() => {
@@ -46,6 +69,8 @@ export default function Dashboard() {
       const minMs = 60000;
       const maxMs = 600000;
       const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+      
+      setNextRunTime(Date.now() + delay);
       
       const delayMinutes = (delay / 60000).toFixed(1);
       addLog(`[Sleep] Bot blending in. Next algorithm strike in ${delayMinutes} minutes...`, "warning");
@@ -70,6 +95,7 @@ export default function Dashboard() {
       if (logs.length > 1) {
         addLog("Auto-pilot disengaged. Standing by.", "warning");
       }
+      setNextRunTime(null);
     }
 
     return () => {
@@ -156,10 +182,18 @@ export default function Dashboard() {
             <div className="h-px w-full bg-white/10 my-6" />
 
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-2">Session Stats</h3>
-              <div>
-                <p className="text-zinc-400 text-sm">Videos Processed & Liked</p>
-                <p className="text-4xl font-extrabold text-white text-glow">{stats.videosLiked}</p>
+              <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-2 border-b border-white/10 pb-2">Session Telemetry</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-zinc-500 text-[11px] font-bold uppercase tracking-wider mb-1">Payloads Delivered</p>
+                  <p className="text-4xl font-extrabold text-white text-glow">{stats.videosLiked}</p>
+                </div>
+                <div>
+                  <p className="text-zinc-500 text-[11px] font-bold uppercase tracking-wider mb-1 text-right">Next Strike In</p>
+                  <p className={cn("text-3xl font-mono text-right font-light tracking-tighter", isActive ? "text-primary animate-pulse text-glow-primary" : "text-zinc-600")}>
+                    {timeLeft}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

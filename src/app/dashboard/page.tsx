@@ -65,9 +65,9 @@ export default function Dashboard() {
     let isCancelled = false;
 
     const scheduleNextCycle = () => {
-      // Random between 1 minute (60,000ms) and 10 minutes (600,000ms)
-      const minMs = 60000;
-      const maxMs = 600000;
+      // Random between 30 seconds (30,000ms) and 5 minutes (300,000ms)
+      const minMs = 30000;
+      const maxMs = 300000;
       const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
       
       setNextRunTime(Date.now() + delay);
@@ -84,9 +84,9 @@ export default function Dashboard() {
     };
 
     const schedulePunisherCycle = () => {
-      // The Sanitizer strikes less often: Randomly between 15 and 45 minutes
-      const minMs = 900000;
-      const maxMs = 2700000;
+      // The Sanitizer strikes less often: Randomly between 2 and 10 minutes
+      const minMs = 120000;
+      const maxMs = 600000;
       const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
       
       const delayMinutes = (delay / 60000).toFixed(1);
@@ -101,7 +101,7 @@ export default function Dashboard() {
     };
 
     if (isActive) {
-      addLog("Auto-pilot engaged. Utilizing randomized human-mimicry intervals (1-10 mins).", "success");
+      addLog("Auto-pilot engaged. Utilizing randomized stealth intervals (30s-5m).", "success");
       addLog("Slop-Punisher subsystem ONLINE. Engaging independent scan sweeps.", "info");
       
       // Run immediately once, then schedule the first delayed burst

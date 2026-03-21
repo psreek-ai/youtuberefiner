@@ -29,7 +29,7 @@ Instead of manually clicking "Not Interested" (which the official API doesn't su
 2. **Aggregates State:** Randomly samples 5 of your trusted subscribed channels and fetches their absolute newest video releases via batched Quota-friendly loops.
 3. **Gemini Synthesis:** Concatenates these trending topics and feeds them to **Google Gemini 2.5 Flash**, synthesizing a dynamic, hyper-relevant search query that represents your exact current niche.
 4. **Programmatic Engagement:** Searches YouTube for hyper-fresh videos (strictly under 5 days old) matching this generated query, sorts them purely by highest Rating (Likes), and automatically assigns a "Like" on your behalf.
-5. **Human-Mimicry Loop:** The bot utilizes a randomized sleep timer between exactly 1.0 and 10.0 minutes between every payload. This organic, unpredictable "stealth mode" protects your daily API quotas and perfectly mimics genuine human browsing behavior.
+5. **Human-Mimicry Loop:** The bot utilizes a randomized sleep timer between exactly 30 seconds and 5 minutes between every payload. This organic, unpredictable "stealth mode" protects your daily API quotas and perfectly mimics genuine human browsing behavior.
 
 ## 🛠 Tech Stack
 - **Framework:** Next.js 15 (App Router) + React
@@ -77,7 +77,7 @@ Open [http://localhost:3000](http://localhost:3000), log in with your Google Acc
 ---
 
 ## 🛡️ API Quota & Security
-Google limits the YouTube Data API to **10,000 Quota Units per day** and Gemma 3 to **14,400 Requests per day** for free tiers. Because the Auto-Pilot utilizes a Randomized Human-Mimicry sleep interval (1-10 minutes), it is mathematically protected from burning through these limits. You can safely leave the Refiner running in a background tab all day long.
+Google limits the YouTube Data API to **10,000 Quota Units per day** and Gemma 3 to **14,400 Requests per day** for free tiers. Because the Auto-Pilot utilizes a Randomized Stealth sleep interval (30 sec - 5 mins), it is mathematically protected from burning through these limits. You can safely leave the Refiner running in a background tab all day long.
 
 ## 📜 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

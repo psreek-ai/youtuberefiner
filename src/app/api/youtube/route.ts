@@ -140,10 +140,21 @@ DO NOT write sentences. DO NOT wrap in quotes. Return ONLY the search query text
     }
 
     // Step 6: Execute the positive signal (Like)
-    await youtube.videos.rate({
-      id: videoId,
-      rating: "like",
-    });
+    try {
+      await youtube.videos.rate({
+        id: videoId,
+        rating: "like",
+      });
+    } catch (rateError: any) {
+      if (rateError.message && rateError.message.toLowerCase().includes("disabled ratings")) {
+        return NextResponse.json({
+          action: "no_content",
+          message: `The creator disabled likes for "${videoTitle || 'this video'}". Skipping.`,
+          logData: { channelName: targetChannel || 'Unknown', queryVerbiage }
+        });
+      }
+      throw rateError;
+    }
 
     return NextResponse.json({ 
       action: "liked", 

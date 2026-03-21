@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { google as googleapis } from "googleapis";
 import { GoogleGenAI } from "@google/genai";
+import { YoutubeTranscript } from 'youtube-transcript';
 
 // Helper to pick random item
 const randomFromArray = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
@@ -139,7 +140,42 @@ DO NOT write sentences. DO NOT wrap in quotes. Return ONLY the search query text
        return NextResponse.json({ action: "no_content", message: "Fresh video ID parsing failed." });
     }
 
-    // Step 6: Execute the positive signal (Like)
+    // Step 6: Transcript Density Filtering
+    try {
+       const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId);
+       const transcriptText = transcriptArray.map(t => t.text).join(' ');
+       
+       const densityPrompt = `Analyze the following YouTube video transcript.
+Transcript excerpt: ${transcriptText.substring(0, 4000)}
+
+Does this video contain deep engineering depth, advanced system design, specialized logic, or high-level technical concepts?
+If it is a generic beginner tutorial, surface-level fluff, viral clickbait, or lacks advanced technical density, you must reject it.
+Answer strictly with a single word: PASS or FAIL.`;
+
+       const densityRes = await ai.models.generateContent({
+         model: 'gemma-3-27b-it',
+         contents: densityPrompt,
+       });
+
+       const densityCheck = densityRes.text?.trim().toUpperCase() || "FAIL";
+       
+       if (!densityCheck.includes("PASS")) {
+          return NextResponse.json({
+            action: "no_content",
+            message: `Transcript analysis for "${videoTitle}" failed the technical density check. Skipped.`,
+            logData: { channelName: targetChannel, queryVerbiage }
+          });
+       }
+    } catch (transcriptError) {
+       // If the video has no captions, or captions are disabled, we defensively skip it to ensure quality
+       return NextResponse.json({
+         action: "no_content",
+         message: `Could not parse subtitles for "${videoTitle}". Transcript density check aborted.`,
+         logData: { channelName: targetChannel, queryVerbiage }
+       });
+    }
+
+    // Step 7: Execute the positive signal (Like)
     try {
       await youtube.videos.rate({
         id: videoId,

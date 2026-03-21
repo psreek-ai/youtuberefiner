@@ -28,7 +28,7 @@ export default function Dashboard() {
     message: "System initialized. Ready to engage algorithm auto-pilot.",
     type: "info"
   }]);
-  const [stats, setStats] = useState({ videosLiked: 0, channelsSubbed: 0 });
+  const [stats, setStats] = useState({ videosLiked: 0, videosDisliked: 0, channelsSubbed: 0 });
   const [nextRunTime, setNextRunTime] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState<string>("--:--");
   const logsEndRef = useRef<HTMLDivElement>(null);
@@ -83,13 +83,34 @@ export default function Dashboard() {
       }, delay);
     };
 
+    const schedulePunisherCycle = () => {
+      // The Sanitizer strikes less often: Randomly between 15 and 45 minutes
+      const minMs = 900000;
+      const maxMs = 2700000;
+      const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+      
+      const delayMinutes = (delay / 60000).toFixed(1);
+      addLog(`[Sanitizer] Negative Signal cannon arming in ${delayMinutes} minutes...`, "warning");
+
+      setTimeout(async () => {
+        if (!isCancelled) {
+          await runPunisherCycle();
+          if (!isCancelled) schedulePunisherCycle();
+        }
+      }, delay);
+    };
+
     if (isActive) {
       addLog("Auto-pilot engaged. Utilizing randomized human-mimicry intervals (1-10 mins).", "success");
+      addLog("Slop-Punisher subsystem ONLINE. Engaging independent scan sweeps.", "info");
       
       // Run immediately once, then schedule the first delayed burst
       runAutomationCycle().then(() => {
          if (!isCancelled) scheduleNextCycle();
       });
+      
+      // Start the secondary long-form cycle for removing clickbait
+      schedulePunisherCycle();
       
     } else {
       if (logs.length > 1) {
@@ -143,6 +164,32 @@ export default function Dashboard() {
     }
   };
 
+  const runPunisherCycle = async () => {
+    try {
+      addLog("Initializing Sanitizer: Scanning YouTube Trending cache for clickbait...", "info");
+      
+      const res = await fetch('/api/youtube/punisher', { method: 'POST' });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        addLog(`Sanitizer Warning: ${data.message || 'Unknown error'}`, "warning");
+        if (res.status === 429) setIsActive(false); 
+        return;
+      }
+      
+      if (data.action === 'disliked') {
+         addLog(`[Slop Detected] Explicitly Disliking: "${data.videoTitle}" by ${data.channelName}`, "error");
+         setStats(prev => ({ ...prev, videosDisliked: prev.videosDisliked + 1 }));
+      } else if (data.action === 'no_content') {
+         addLog(`[Sanitizer] ${data.message}`, "info");
+      }
+      
+    } catch (error) {
+      addLog("Unexpected error reaching the punisher server.", "error");
+      setIsActive(false);
+    }
+  };
+
   if (status === "loading") {
     return (
       <div className="flex justify-center flex-col items-center min-h-[50vh] gap-4">
@@ -186,11 +233,15 @@ export default function Dashboard() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-zinc-500 text-[11px] font-bold uppercase tracking-wider mb-1">Payloads Delivered</p>
-                  <p className="text-4xl font-extrabold text-white text-glow">{stats.videosLiked}</p>
+                  <p className="text-4xl font-extrabold text-[#4ade80] text-glow-green">{stats.videosLiked}</p>
                 </div>
                 <div>
-                  <p className="text-zinc-500 text-[11px] font-bold uppercase tracking-wider mb-1 text-right">Next Strike In</p>
-                  <p className={cn("text-3xl font-mono text-right font-light tracking-tighter", isActive ? "text-primary animate-pulse text-glow-primary" : "text-zinc-600")}>
+                  <p className="text-zinc-500 text-[11px] font-bold uppercase tracking-wider mb-1">Slop Destroyed</p>
+                  <p className="text-4xl font-extrabold text-red-500 text-glow-red">{stats.videosDisliked}</p>
+                </div>
+                <div className="col-span-2 mt-2">
+                  <p className="text-zinc-500 text-[11px] font-bold uppercase tracking-wider mb-1">Next Liked Strike In</p>
+                  <p className={cn("text-3xl font-mono tracking-tighter", isActive ? "text-primary animate-pulse text-glow-primary" : "text-zinc-600")}>
                     {timeLeft}
                   </p>
                 </div>

@@ -38,22 +38,44 @@ export default function Dashboard() {
 
   // The Main Loop
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let timeoutId: NodeJS.Timeout;
+    let isCancelled = false;
+
+    const scheduleNextCycle = () => {
+      // Random between 1 minute (60,000ms) and 10 minutes (600,000ms)
+      const minMs = 60000;
+      const maxMs = 600000;
+      const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+      
+      const delayMinutes = (delay / 60000).toFixed(1);
+      addLog(`[Sleep] Bot blending in. Next algorithm strike in ${delayMinutes} minutes...`, "warning");
+
+      timeoutId = setTimeout(async () => {
+        if (!isCancelled) {
+          await runAutomationCycle();
+          if (!isCancelled) scheduleNextCycle();
+        }
+      }, delay);
+    };
 
     if (isActive) {
-      addLog("Auto-pilot engaged. Target: Subscribed channels similarity expansion.", "success");
-      addLog("[WARNING]: Running in RAPID BURST mode. Expect your Google API Quota to hit limits in ~30 minutes.", "warning");
+      addLog("Auto-pilot engaged. Utilizing randomized human-mimicry intervals (1-10 mins).", "success");
       
-      // Run immediately once, then every 30 seconds (30,000 ms) for Burst Training
-      runAutomationCycle();
-      interval = setInterval(runAutomationCycle, 30000);
+      // Run immediately once, then schedule the first delayed burst
+      runAutomationCycle().then(() => {
+         if (!isCancelled) scheduleNextCycle();
+      });
+      
     } else {
       if (logs.length > 1) {
         addLog("Auto-pilot disengaged. Standing by.", "warning");
       }
     }
 
-    return () => clearInterval(interval);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+    };
   }, [isActive]);
 
   const addLog = (message: string, type: LogEntry["type"] = "info") => {

@@ -7,10 +7,10 @@ import { GoogleGenAI } from "@google/genai";
 // Helper to pick random item
 const randomFromArray = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
-// Generate a date string 30 days ago for "trending/recent" filter
-const getThirtyDaysAgo = () => {
+// Generate a date string 5 days ago for a tight "trending" filter
+const getFiveDaysAgo = () => {
   const d = new Date();
-  d.setDate(d.getDate() - 30);
+  d.setDate(d.getDate() - 5);
   return d.toISOString();
 };
 
@@ -115,8 +115,8 @@ DO NOT write sentences. DO NOT wrap in quotes. Return ONLY the search query text
       maxResults: 5,
       type: ["video"],
       relevanceLanguage: "en",
-      order: "date",
-      publishedAfter: getThirtyDaysAgo(),
+      order: "rating", // Sorted by highest percentage of likes
+      publishedAfter: getFiveDaysAgo(),
     });
 
     const freshVideos = searchRes.data.items;

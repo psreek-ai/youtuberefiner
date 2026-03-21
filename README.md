@@ -49,7 +49,9 @@ Instead of manually clicking "Not Interested" (which the official API doesn't su
 - A free **Google Gemini API Key** (Google AI Studio).
 
 ### 2. Environment Variables
-Clone the repo and create a `.env.local` file in the root directory:
+Clone the repo and create a `.env.local` file in the root directory. 
+
+**👉 Read the [Complete SETUP.md Guide](SETUP.md) for step-by-step instructions on generating your free Google Cloud and Gemini API keys.**
 
 ```env
 # OAuth Credentials
